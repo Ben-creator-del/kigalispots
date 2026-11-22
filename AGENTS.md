@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project rules
+- Spot listings live as static placeholder data in `src/data/spots.ts` with pure filter helpers (tested in `spots.test.ts`); swap this module for a real data source later without touching the cards.
+- Each spot has its own page at `/spots/$id` so it can be linked and shared.
