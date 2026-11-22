@@ -1,14 +1,22 @@
 import { Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { CATEGORY_LABEL, PRICE_HINT, type Category, type Spot } from "@/data/spots";
+import { PRICE_HINT, categoryTone, type CategoryTone, type PriceLevel } from "@/data/spots";
 
-const DOT: Record<Category, string> = {
+const DOT: Record<CategoryTone, string> = {
   cafe: "bg-cafe",
   restaurant: "bg-restaurant",
   hangout: "bg-hangout",
 };
 
-export function CategoryBadge({ category, className }: { category: Category; className?: string }) {
+export function CategoryBadge({
+  slug,
+  name,
+  className,
+}: {
+  slug: string;
+  name: string;
+  className?: string;
+}) {
   return (
     <span
       className={cn(
@@ -16,8 +24,8 @@ export function CategoryBadge({ category, className }: { category: Category; cla
         className,
       )}
     >
-      <span className={cn("size-2 rounded-full", DOT[category])} />
-      {CATEGORY_LABEL[category]}
+      <span className={cn("size-2 rounded-full", DOT[categoryTone(slug)])} />
+      {name}
     </span>
   );
 }
@@ -31,7 +39,7 @@ export function Rating({ value }: { value: number }) {
   );
 }
 
-export function Price({ level }: { level: Spot["priceLevel"] }) {
+export function Price({ level }: { level: PriceLevel }) {
   return (
     <span className="text-sm font-semibold tracking-wider" title={PRICE_HINT[level]}>
       <span className="text-foreground">{"$".repeat(level)}</span>

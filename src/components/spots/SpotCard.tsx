@@ -19,20 +19,29 @@ export function SpotCard({ spot, index = 0 }: { spot: Spot; index?: number }) {
           className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-card-overlay" />
-        <CategoryBadge category={spot.category} className="absolute left-3 top-3" />
+        <CategoryBadge
+          slug={spot.category}
+          name={spot.categoryName}
+          className="absolute left-3 top-3"
+        />
+        {spot.featured && (
+          <span className="absolute right-3 top-3 rounded-full bg-accent px-3 py-1 text-xs font-semibold text-accent-foreground shadow-soft">
+            Featured
+          </span>
+        )}
       </div>
       <div className="flex flex-1 flex-col gap-3 p-5">
         <div className="flex items-start justify-between gap-3">
           <h3 className="text-xl font-semibold leading-tight text-foreground">{spot.name}</h3>
-          <Rating value={spot.rating} />
+          {spot.rating !== null && <Rating value={spot.rating} />}
         </div>
-        <p className="text-sm leading-relaxed text-muted-foreground">{spot.tagline}</p>
+        <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">{spot.tagline}</p>
         <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
           <span className="inline-flex items-center gap-1.5 text-sm font-medium text-foreground">
             <MapPin className="size-4 text-accent" aria-hidden />
-            {spot.neighborhood}
+            {spot.neighborhoodName}
           </span>
-          <Price level={spot.priceLevel} />
+          {spot.priceLevel !== null && <Price level={spot.priceLevel} />}
         </div>
       </div>
     </Link>

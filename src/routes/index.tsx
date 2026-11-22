@@ -1,14 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import { Info, Search, X } from "lucide-react";
 import heroImage from "@/assets/hero-kigali.jpg";
-import {
-  CATEGORIES,
-  SPOTS,
-  countByCategory,
-  filterSpots,
-  type CategoryFilter,
-} from "@/data/spots";
+import { ALL, countByCategory, filterSpots } from "@/data/spots";
+import { directoryQuery } from "@/data/directory";
 import { SpotCard } from "@/components/spots/SpotCard";
 import { Logo, SiteFooter } from "@/components/spots/SiteHeader";
 
@@ -30,13 +26,21 @@ export const Route = createFileRoute("/")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
+  loader: ({ context }) => context.queryClient.ensureQueryData(directoryQuery()),
   component: Index,
 });
 
 function Index() {
-  const [category, setCategory] = useState<CategoryFilter>("all");
+  const { data } = useSuspenseQuery(directoryQuery());
+  const { spots, categories, neighborhoods, source } = data;
+  const [category, setCategory] = useState<string>(ALL);
+  const [neighborhood, setNeighborhood] = useState<string>(ALL);
   const [query, setQuery] = useState("");
-  const results = useMemo(() => filterSpots(SPOTS, { category, query }), [category, query]);
+  const results = useMemo(
+    () => filterSpots(spots, { category, neighborhood, query }),
+    [spots, category, neighborhood, query],
+  );
+  const chips = [{ slug: ALL, name: "All spots" }, ...categories];
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -92,22 +96,48 @@ function Index() {
               {results.length} {results.length === 1 ? "place" : "places"} to check out
             </p>
           </div>
-          <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2">
-            {CATEGORIES.map((c) => (
-              <button
-                key={c.value}
-                type="button"
-                className="chip"
-                data-active={category === c.value}
-                aria-pressed={category === c.value}
-                onClick={() => setCategory(c.value)}
-              >
-                {c.label}
-                <span className="text-xs opacity-70">{countByCategory(SPOTS, c.value)}</span>
-              </button>
-            ))}
+          <div className="flex flex-col gap-3 sm:items-end">
+            <div role="group" aria-label="Filter by category" className="flex flex-wrap gap-2">
+              {chips.map((c) => (
+                <button
+                  key={c.slug}
+                  type="button"
+                  className="chip"
+                  data-active={category === c.slug}
+                  aria-pressed={category === c.slug}
+                  onClick={() => setCategory(c.slug)}
+                >
+                  {c.name}
+                  <span className="text-xs opacity-70">{countByCategory(spots, c.slug)}</span>
+                </button>
+              ))}
+            </div>
+            {neighborhoods.length > 0 && (
+              <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                Neighbourhood
+                <select
+                  value={neighborhood}
+                  onChange={(e) => setNeighborhood(e.target.value)}
+                  className="chip appearance-none pr-8"
+                >
+                  <option value={ALL}>All of Kigali</option>
+                  {neighborhoods.map((n) => (
+                    <option key={n.slug} value={n.slug}>
+                      {n.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
           </div>
         </div>
+
+        {source === "sample" && (
+          <p className="mt-6 flex items-center gap-2 rounded-xl bg-secondary px-4 py-3 text-sm text-secondary-foreground">
+            <Info className="size-4 shrink-0" aria-hidden />
+            Showing sample spots — the venues database isn't set up yet.
+          </p>
+        )}
 
         {results.length > 0 ? (
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -117,14 +147,21 @@ function Index() {
           </div>
         ) : (
           <div className="mt-10 rounded-2xl border border-dashed border-border bg-card px-6 py-16 text-center">
-            <h3 className="text-2xl font-semibold text-foreground">No spots match that</h3>
-            <p className="mt-2 text-muted-foreground">Try another word or a different category.</p>
+            <h3 className="text-2xl font-semibold text-foreground">
+              {spots.length === 0 ? "No venues added yet" : "No spots match that"}
+            </h3>
+            <p className="mt-2 text-muted-foreground">
+              {spots.length === 0
+                ? "New cafes, restaurants and hangouts will show up here as soon as they're added."
+                : "Try another word, neighbourhood or category."}
+            </p>
             <button
               type="button"
               className="chip mt-6"
               onClick={() => {
                 setQuery("");
-                setCategory("all");
+                setCategory(ALL);
+                setNeighborhood(ALL);
               }}
             >
               Show all spots

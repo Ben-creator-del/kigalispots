@@ -1,15 +1,20 @@
 import { Link, createFileRoute, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Clock, MapPin } from "lucide-react";
-import { CATEGORY_LABEL, PRICE_HINT, SPOTS, getSpot } from "@/data/spots";
+import { PRICE_HINT, type Spot } from "@/data/spots";
+import { directoryQuery } from "@/data/directory";
 import { CategoryBadge, Price, Rating } from "@/components/spots/SpotMeta";
 import { SpotCard } from "@/components/spots/SpotCard";
 import { Logo, SiteFooter } from "@/components/spots/SiteHeader";
 
 export const Route = createFileRoute("/spots/$id")({
-  loader: ({ params }) => {
-    const spot = getSpot(params.id);
+  loader: async ({ params, context }) => {
+    const directory = await context.queryClient.ensureQueryData(directoryQuery());
+    const spot = directory.spots.find((s) => s.id === params.id);
     if (!spot) throw notFound();
-    return { spot };
+    const related = directory.spots
+      .filter((s) => s.category === spot.category && s.id !== spot.id)
+      .slice(0, 3);
+    return { spot, related };
   },
   head: ({ loaderData }) => {
     if (!loaderData) {
@@ -18,7 +23,7 @@ export const Route = createFileRoute("/spots/$id")({
       };
     }
     const { spot } = loaderData;
-    const title = `${spot.name} · ${CATEGORY_LABEL[spot.category]} in ${spot.neighborhood} — KigaliSpots`;
+    const title = `${spot.name} · ${spot.neighborhoodName}, Kigali — KigaliSpots`;
     return {
       meta: [
         { title },
@@ -35,8 +40,7 @@ export const Route = createFileRoute("/spots/$id")({
 });
 
 function SpotPage() {
-  const { spot } = Route.useLoaderData();
-  const related = SPOTS.filter((s) => s.category === spot.category && s.id !== spot.id).slice(0, 3);
+  const { spot, related } = Route.useLoaderData();
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -59,7 +63,7 @@ function SpotPage() {
           />
           <div className="absolute inset-0 bg-hero-overlay" />
           <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
-            <CategoryBadge category={spot.category} />
+            <CategoryBadge slug={spot.category} name={spot.categoryName} />
             <h1 className="mt-3 text-4xl font-semibold text-hero-ink sm:text-6xl">{spot.name}</h1>
             <p className="mt-2 max-w-2xl text-lg text-hero-ink/85">{spot.tagline}</p>
           </div>
@@ -85,25 +89,39 @@ function SpotPage() {
 
           <aside className="h-fit rounded-2xl border border-border bg-card p-6 shadow-soft">
             <dl className="space-y-5">
-              <div className="flex items-center justify-between">
-                <dt className="text-sm text-muted-foreground">Rating</dt>
-                <dd>
-                  <Rating value={spot.rating} />
-                </dd>
-              </div>
-              <div className="flex items-center justify-between">
-                <dt className="text-sm text-muted-foreground">Price</dt>
-                <dd className="flex items-center gap-2">
-                  <Price level={spot.priceLevel} />
-                  <span className="text-sm text-muted-foreground">{PRICE_HINT[spot.priceLevel]}</span>
-                </dd>
-              </div>
-              <div className="border-t border-border pt-5">
+              {spot.rating !== null && (
+                <div className="flex items-center justify-between">
+                  <dt className="text-sm text-muted-foreground">Rating</dt>
+                  <dd>
+                    <Rating value={spot.rating} />
+                  </dd>
+                </div>
+              )}
+              {spot.priceLevel !== null && (
+                <div className="flex items-center justify-between">
+                  <dt className="text-sm text-muted-foreground">Price</dt>
+                  <dd className="flex items-center gap-2">
+                    <Price level={spot.priceLevel} />
+                    <span className="text-sm text-muted-foreground">
+                      {PRICE_HINT[spot.priceLevel]}
+                    </span>
+                  </dd>
+                </div>
+              )}
+              <div>
                 <dt className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Clock className="size-4" /> Hours
+                  <MapPin className="size-4" /> Neighbourhood
                 </dt>
-                <dd className="mt-1 font-semibold text-foreground">{spot.hours}</dd>
+                <dd className="mt-1 font-semibold text-foreground">{spot.neighborhoodName}</dd>
               </div>
+              {spot.hours && (
+                <div>
+                  <dt className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="size-4" /> Hours
+                  </dt>
+                  <dd className="mt-1 font-semibold text-foreground">{spot.hours}</dd>
+                </div>
+              )}
               <div>
                 <dt className="flex items-center gap-2 text-sm text-muted-foreground">
                   <MapPin className="size-4" /> Address
@@ -117,10 +135,10 @@ function SpotPage() {
         {related.length > 0 && (
           <section className="mt-16">
             <h2 className="text-3xl font-semibold text-foreground">
-              More {CATEGORY_LABEL[spot.category].toLowerCase()}s to try
+              More {spot.categoryName.toLowerCase()} to try
             </h2>
             <div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {related.map((s, i) => (
+              {related.map((s: Spot, i: number) => (
                 <SpotCard key={s.id} spot={s} index={i} />
               ))}
             </div>
