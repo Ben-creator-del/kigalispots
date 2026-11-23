@@ -22,6 +22,7 @@ export interface VenueRow {
   image_url: string | null;
   is_featured: boolean | null;
   price_tier: number | string | null;
+  vibe_tags?: string[] | null;
   category: Ref | Ref[];
   neighborhood: Ref | Ref[];
 }
@@ -48,14 +49,14 @@ export function mapVenueRow(row: VenueRow): Spot {
     priceLevel: toPriceLevel(row.price_tier),
     hours: null,
     address: row.address ?? "Kigali",
-    tags: [],
+    tags: (row.vibe_tags ?? []).filter((t) => t.trim() !== ""),
     image: row.image_url || fallbackImage(categorySlug),
     featured: row.is_featured === true,
   };
 }
 
 const VENUE_SELECT =
-  "id, slug, name, description, address, image_url, is_featured, price_tier, category:categories(slug, name), neighborhood:neighborhoods(slug, name)";
+  "id, slug, name, description, address, image_url, is_featured, price_tier, vibe_tags, category:categories(slug, name), neighborhood:neighborhoods(slug, name)";
 
 export async function fetchDirectory(): Promise<Directory> {
   const [venues, categories, neighborhoods] = await Promise.all([

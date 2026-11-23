@@ -56,6 +56,7 @@ describe("venues from the database", () => {
       image_url: null,
       is_featured: true,
       price_tier: 2,
+      vibe_tags: ["Quiet", "Views"],
       category: { slug: "cafes-coworking", name: "Cafes & Coworking" },
       neighborhood: [{ slug: "kiyovu", name: "Kiyovu" }],
     });
@@ -64,6 +65,7 @@ describe("venues from the database", () => {
     expect(spot.neighborhoodName).toBe("Kiyovu");
     expect(spot.priceLevel).toBe(2);
     expect(spot.featured).toBe(true);
+    expect(spot.tags).toEqual(["Quiet", "Views"]);
     expect(spot.image).toBeTruthy();
   });
 });

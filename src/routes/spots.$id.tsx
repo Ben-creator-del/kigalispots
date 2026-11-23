@@ -44,7 +44,7 @@ function SpotPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-6">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-6">
         <Logo />
         <Link
           to="/"
